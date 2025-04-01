@@ -157,7 +157,7 @@ async fn manager_plugin(e: Arc<MsgEvent>, bot: Arc<RuntimeBot>){
         }
         _ => {
           if cfg.api_key.trim().is_empty(){
-            e.reply_and_quote("喵发现你的 api_key 是空的哟, 你可以使用以下命令更新你的 api_key, 否则功能受限哟喵~\n.sc update <api_key>");
+            e.reply_and_quote("喵发现你的 api_key 是空的哟, 你可以使用以下命令更新你的 api_key, 否则功能受限哟喵~\n.sc api_key set <api_key>");
         }
         e.reply(HELP);
     }
