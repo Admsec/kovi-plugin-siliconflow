@@ -1,5 +1,8 @@
 #![allow(warnings)]
-use serde::Deserialize;
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
 #[derive(Debug, Deserialize)]
 pub struct ChatCompletionBase {
@@ -20,6 +23,85 @@ pub struct UserProFile {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct  RequestResponse {
+    pub answer: HashMap<String, String>,
+    pub reason: bool
+}
+
+impl RequestResponse {
+    pub fn new(ans: HashMap<String, String> , reason: bool ) -> Self {
+        Self { answer: ans, reason: reason }
+    }
+}
+
+pub enum ChatCompletions {
+    ReasonChatCompletion,
+    GeneralCompletions
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+// 无思考内容的
+pub struct GeneralCompletions {
+  pub id: String,
+  pub object: String,
+  pub created: u64,
+  pub model: String,
+  pub choices: Vec<GeneralChoice>,
+  pub usage: Usage,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub system_fingerprint: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GeneralChoice {
+    pub index: u32,
+    pub message: GeneralMessage,
+    pub finish_reason: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GeneralMessage {
+    pub role: String,
+    pub content: String,
+}
+
+
+// 有思考内容的
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ReasonChatCompletion {
+    pub id: String,
+    pub object: String,
+    pub created: u64,
+    pub model: String,
+    pub choices: Vec<ReasonChoice>,
+    pub usage: Usage,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub system_fingerprint: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ReasonChoice {
+    pub index: u32,
+    pub message: ReasonMessage,
+    pub finish_reason: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ReasonMessage {
+    pub role: String,
+    pub content: String,
+    pub reasoning_content: String,
+}
+
+// 通用的
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Usage {
+    pub prompt_tokens: u32,
+    pub completion_tokens: u32,
+    pub total_tokens: u32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct UserData {
     id: String,
     pub name: String,
@@ -36,24 +118,10 @@ pub struct UserData {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct R1ChatCompletion {
-    #[serde(flatten)]
-    base: ChatCompletionBase,
-    pub choices: Vec<R1Choice>,
-}
-
-#[derive(Debug, Deserialize)]
 pub struct V3ChatCompletion {
     #[serde(flatten)]
     base: ChatCompletionBase,
     pub choices: Vec<V3Choice>,
-}
-
-#[derive(Debug, Deserialize)]
-struct R1Choice {
-    index: u32,
-    message: R1Message,
-    finish_reason: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -64,51 +132,13 @@ struct V3Choice {
 }
 
 #[derive(Debug, Deserialize)]
-struct R1Message {
-    role: String,
-    content: String,
-    reasoning_content: String,
-}
-
-#[derive(Debug, Deserialize)]
 struct V3Message {
     role: String,
     content: String,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Usage {
-    prompt_tokens: u32,
-    completion_tokens: u32,
-    total_tokens: u32,
-}
-
-// 为各类型实现统一的方法
-pub trait ChatCompletion {
-    fn get_plain_msg(&self) -> &str;
-    fn get_model(&self) -> &str;
-}
-
-impl ChatCompletion for R1ChatCompletion {
-    fn get_plain_msg(&self) -> &str {
-        self.choices.first()
-            .map(|c| c.message.content.as_str())
-            .unwrap_or_default()
-    }
-
-    fn get_model(&self) -> &str {
-        &self.base.model
-    }
-}
-
-impl ChatCompletion for V3ChatCompletion {
-    fn get_plain_msg(&self) -> &str {
-        self.choices.first()
-            .map(|c| c.message.content.as_str())
-            .unwrap_or_default()
-    }
-
-    fn get_model(&self) -> &str {
-        &self.base.model
-    }
+#[derive(Error, Debug)]
+pub enum ResponseError {
+  #[error("响应体解析错误")]
+  ParseResBodyError
 }

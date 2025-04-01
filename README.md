@@ -1,6 +1,6 @@
 ## 简介
 
-一款对接硅基流动的机器人问答插件，仅需硅基流动的 api_key 就可以使用，本插件仅限于使用 deepseek-ai/DeepSeek-R1 和 deepseek-ai/DeepSeek-V3，暂不支持其他的模型
+一款对接硅基流动官方的问答插件，仅需硅基流动的 api_key 就可以使用
 
 ## 打个广告
 
@@ -20,19 +20,22 @@
 cargo kovi add kovi-plugin-siliconflow
 ```
 
-2. 对着机器人使用 .sc update <api_key> 指令更新 api_key ，或者手动填写 api_key，路径是 <kovi-bot>/data/kovi-plugin-siliconflow/config.json
+2. 对着机器人使用 .sc api_key set <api_key> 指令更新 api_key ，或者手动填写 api_key，路径是 <kovi-bot>/data/kovi-plugin-siliconflow/config.json
 
 ```
-.sc update <你的 api_key>
+.sc api_key set <api_key>
 ```
 
 3. 本插件还有一些其他功能，命令前缀是 .sc
 
 ```
-.sc help 帮助
-.sc info config 列出当前配置
-.sc info user 获取用户信息
-.sc update <api_key> 更新api_key
-.sc hint <提示词> 更新提示词
+.sc help: 帮助
+.sc info config: 列出当前配置
+.sc info user: 获取用户信息
+.sc api_key set <api_key>: 更新api_key
+.sc hint set <提示词>: 更新提示词
+.sc forward set <true|false>: 开启/关闭消息转发
+.sc prefix set <prefix> <model>: 设置触发器和对应模型
+.sc prefix del <prefix>: 删除触发器
 ```
 
