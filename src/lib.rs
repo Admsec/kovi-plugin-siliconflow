@@ -35,43 +35,49 @@ async fn ask_question_main(e: Arc<MsgEvent>, bot: Arc<RuntimeBot>){
     e.reply_and_quote(msg);
     return ;
   }).unwrap();
-  let pre_match_str: String = e.borrow_text().unwrap().chars().take(3).collect();
-  let match_prefix = cfg.prefix.keys().filter(|&x|{
-    let x_len = x.chars().count();
-    x == &pre_match_str.chars().take(x_len).collect::<String>()
-  });
-  if match_prefix.clone().count() < 1{
-    return ;
-  }
-  let mut match_prefix_vec: Vec<&String> = match_prefix.clone().collect();
-  match_prefix_vec.sort_by(|&a, &b| b.len().cmp(&a.len()));
-  let prefix = match_prefix_vec[0];
-  let question = e.raw_message.trim_start_matches(prefix);
-  let model = cfg.prefix.get(prefix).unwrap();
-  let uid = &e.self_id.to_string();
-  let nickname = &e.get_sender_nickname();
-  send_poke(&bot, &e).await;
-  let ans = get_ans_from_api(&e, cfg.api_key, model.to_string(), cfg.hint, question.to_string())
-  .await;
-  match ans {
-      Ok(req_result) => {
-        if cfg.forward{
-          let mut nodes = Vec::new();
-          nodes.push_fake_node_from_content(uid, nickname, Message::from(&req_result.answer["message"]));
-          if req_result.reason {
-            nodes.push_fake_node_from_content(uid, nickname, Message::from(&req_result.answer["reason_message"]));
-          }
-          e.reply(nodes);
-        } else {
-          // 没开启消息转发的话，直接发送回答内容
-          e.reply(Message::from(&req_result.answer["message"]));
+  let text = e.borrow_text();
+  match text {
+      Some(pre_match_str) => {
+        let match_prefix = cfg.prefix.keys().filter(|&x|{
+          let x_len = x.chars().count();
+          x == &pre_match_str.chars().take(x_len).collect::<String>()
+        });
+        if match_prefix.clone().count() < 1{
+          return ;
+        }
+        let mut match_prefix_vec: Vec<&String> = match_prefix.clone().collect();
+        match_prefix_vec.sort_by(|&a, &b| b.len().cmp(&a.len()));
+        let prefix = match_prefix_vec[0];
+        let question = e.raw_message.trim_start_matches(prefix);
+        let model = cfg.prefix.get(prefix).unwrap();
+        let uid = &e.self_id.to_string();
+        let nickname = &e.get_sender_nickname();
+        send_poke(&bot, &e).await;
+        let ans = get_ans_from_api(&e, cfg.api_key, model.to_string(), cfg.hint, question.to_string())
+        .await;
+        match ans {
+            Ok(req_result) => {
+              if cfg.forward{
+                let mut nodes = Vec::new();
+                nodes.push_fake_node_from_content(uid, nickname, Message::from(&req_result.answer["message"]));
+                if req_result.reason {
+                  nodes.push_fake_node_from_content(uid, nickname, Message::from(&req_result.answer["reason_message"]));
+                }
+                e.reply(nodes);
+              } else {
+                // 没开启消息转发的话，直接发送回答内容
+                e.reply(Message::from(&req_result.answer["message"]));
+              }
+            },
+            Err(err) => {
+              let msg = format!("Api请求出错了, {}", err.to_string());
+              e.reply_and_quote(msg);
+            }
         }
       },
-      Err(err) => {
-        let msg = format!("Api请求出错了, {}", err.to_string());
-        e.reply_and_quote(msg);
-      }
+      None => {}
   }
+
 }
 
 // 管理配置文件

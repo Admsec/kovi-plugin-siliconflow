@@ -1,6 +1,6 @@
 [package]
 name = "kovi-plugin-siliconflow"
-version = "0.6.0"
+version = "0.6.3"
 edition = "2024"
 description = "一款基于 kovi 的对接硅基流动的机器人问答插件"
 license = "MPL-2.0"
